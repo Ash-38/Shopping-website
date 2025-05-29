@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Moon Shop</title>
+<style>
+  body { margin: 0; font-family: Arial, sans-serif; }
+  header {
+    background-color: #2a9d8f; color: white; padding: 1em;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header h1 {
+    display: flex; align-items: center; gap: 10px;
+  }
+  header h1 img {
+    width: 30px; height: 30px;
+  }
+  #searchBar {
+    width: 40%; padding: 0.5em; border-radius: 4px;
+    border: none; font-size: 1em;
+  }
+  #cartIcon {
+    cursor: pointer; background-color: white; color: #2a9d8f;
+    padding: 0.4em 0.8em; border-radius: 20px;
+  }
+  /* Banner container to hold sliding text */
+  #banner, #adBanner {
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+  /* Sliding text animation */
+  #banner {
+    background-color: #e76f51; color: white;
+    font-size: 1.2em; padding: 0.7em 0;
+  }
+  #banner .slide-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: slide-left 15s linear infinite;
+  }
+  #adBanner {
+    background-color: #fcd5ce; color: #333;
+    font-size: 1.1em; padding: 0.7em 0;
+  }
+  #adBanner .slide-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: slide-left 25s linear infinite;
+  }
+  @keyframes slide-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  main { display: flex; }
+  #sidebar {
+    width: 200px; background-color: #f4f4f4;
+    padding: 1em; border-right: 1px solid #ccc;
+  }
+  .category, .subcategory {
+    cursor: pointer; padding: 0.3em; margin-bottom: 0.2em;
+  }
+  .category:hover, .subcategory:hover { background-color: #ddd; }
+  #products {
+    flex: 1; padding: 1em;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1em;
+  }
+  .product-card {
+    border: 1px solid #ccc; border-radius: 8px;
+    padding: 0.5em; background-color: #fff;
+    display: flex; flex-direction: column; cursor: pointer;
+  }
+  .product-card h4 { margin: 0.5em 0 0.3em; }
+  .product-card p { margin: 0.2em 0; font-size: 0.9em; }
+  .product-card .buttons {
+    display: flex; gap: 5px; margin-top: auto;
+  }
+  .product-card button {
+    flex: 1; background-color: #2a9d8f;
+    color: white; border: none; padding: 0.5em;
+    border-radius: 4px; cursor: pointer; font-size: 0.9em;
+  }
+  .product-card button.buy-now {
+    background-color: #e76f51;
+  }
+  .product-card button:hover { opacity: 0.9; }
+  #cartModal {
+    position: fixed; top: 70px; right: 20px;
+    background: white; border: 2px solid #2a9d8f;
+    padding: 1em; border-radius: 10px; width: 300px;
+    max-height: 300px; overflow-y: auto; box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    display: none; z-index: 10;
+  }
+  .remove-btn {
+    background: none; border: none; color: red;
+    font-size: 16px; margin-left: 10px; cursor: pointer;
+  }
+  #cartModal button.buy-now-cart {
+    background-color: #e76f51;
+    color: white;
+    border: none;
+    padding: 0.3em 0.5em;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    margin-left: 5px;
+  }
+  #clearCartBtn {
+    background-color: #d9534f; /* Bootstrap red */
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+    font-weight: bold;
+    font-size: 1em;
+  }
+  #clearCartBtn:hover {
+    background-color: #c9302c;
+  }
+  #productModal {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    justify-content: center; align-items: center; z-index: 20;
+  }
+  #productModalContent {
+    background: white; padding: 20px; border-radius: 10px;
+    width: 300px; text-align: center;
+  }
+  #productModalContent button {
+    margin-top: 10px; background-color: #2a9d8f;
+    color: white; border: none; padding: 0.5em 1em;
+    border-radius: 4px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/crescent-moon.png" alt="Moon" />
+    Moon Shop
+  </h1>
+  <input type="text" id="searchBar" placeholder="Search for products..." oninput="searchProducts(this.value)" />
+  <div id="cartIcon" onclick="toggleCart()">🛒 Cart: <span id="cartCount">0</span></div>
+</header>
+
+<div id="banner">
+  <div class="slide-text">🎉 Mega Sale! Flat 50% off on Clothes this week only! 🛍️</div>
+</div>
+<div id="adBanner">
+  <div class="slide-text">🚚 Free Delivery on Orders Above ₹499 | 🥦 Fresh Vegetables Daily | 🎧 Flat 20% off on Electronics</div>
+</div>
+
+<main>
+  <aside id="sidebar">
+    <h3>Categories</h3>
+    <div class="category" onclick="showCategory('Grocery')">🥦 Grocery</div>
+    <div class="subcategory" onclick="filterBySubcategory('Vegetables')">↳ 🥬 Vegetables</div>
+    <div class="subcategory" onclick="filterBySubcategory('Fruits')">↳ 🍎 Fruits</div>
+    <div class="subcategory" onclick="filterBySubcategory('Snacks')">↳ 🍪 Snacks</div>
+
+    <div class="category" onclick="showCategory('Electronics')">💻 Electronics</div>
+    <div class="subcategory" onclick="filterBySubcategory('Mobiles')">↳ 📱 Mobiles</div>
+    <div class="subcategory" onclick="filterBySubcategory('Laptops')">↳ 💻 Laptops</div>
+    <div class="subcategory" onclick="filterBySubcategory('Accessories')">↳ 🎧 Accessories</div>
+
+    <div class="category" onclick="showCategory('Clothes')">👕 Clothes</div>
+    <div class="subcategory" onclick="filterBySubcategory('Men')">↳ 👔 Men</div>
+    <div class="subcategory" onclick="filterBySubcategory('Women')">↳ 👗 Women</div>
+    <div class="subcategory" onclick="filterBySubcategory('Kids')">↳ 🧒 Kids</div>
+  </aside>
+
+  <section id="products"></section>
+</main>
+
+<div id="cartModal">
+  <h4>Your Cart</h4>
+  <ul id="cartItems"></ul>
+  <button id="clearCartBtn" onclick="clearCart()">Clear Cart</button>
+</div>
+
+<div id="productModal">
+  <div id="productModalContent"></div>
+</div>
+
+<script>
+  const products = [
+    { name: "Carrot", price: "₹30/kg", category: "Grocery", subcategory: "Vegetables" },
+    { name: "Apple", price: "₹120/kg", category: "Grocery", subcategory: "Fruits" },
+    { name: "Chips", price: "₹20", category: "Grocery", subcategory: "Snacks" },
+    { name: "iPhone 12", price: "₹70000", category: "Electronics", subcategory: "Mobiles" },
+    { name: "Dell Laptop", price: "₹50000", category: "Electronics", subcategory: "Laptops" },
+    { name: "Headphones", price: "₹1500", category: "Electronics", subcategory: "Accessories" },
+    { name: "Men's Shirt", price: "₹800", category: "Clothes", subcategory: "Men" },
+    { name: "Women's Dress", price: "₹1200", category: "Clothes", subcategory: "Women" },
+    { name: "Kids T-shirt", price: "₹400", category: "Clothes", subcategory: "Kids" }
+  ];
+
+  let filteredProducts = [...products];
+  let cart = [];
+
+  function displayProducts() {
+    const container = document.getElementById('products');
+    container.innerHTML = '';
+
+    if (filteredProducts.length === 0) {
+      container.innerHTML = "<p>No products found.</p>";
+      return;
+    }
+
+    filteredProducts.forEach((product, index) => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+        <h4>${product.name}</h4>
+        <p>Price: <strong>${product.price}</strong></p>
+        <p>Category: ${product.category} / ${product.subcategory}</p>
+        <div class="buttons">
+          <button onclick="addToCart(${index})">Add to Cart</button>
+          <button class="buy-now" onclick="showProductModal(${index})">Buy Now</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function searchProducts(query) {
+    query = query.toLowerCase();
+    filteredProducts = products.filter(p =>
+      p.name.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query) ||
+      p.subcategory.toLowerCase().includes(query)
+    );
+    displayProducts();
+  }
+
+  function showCategory(category) {
+    filteredProducts = products.filter(p => p.category === category);
+    displayProducts();
+  }
+
+  function filterBySubcategory(subcat) {
+    filteredProducts = products.filter(p => p.subcategory === subcat);
+    displayProducts();
+  }
+
+  function addToCart(index) {
+    cart.push(filteredProducts[index]);
+    updateCartCount();
+  }
+
+  function updateCartCount() {
+    document.getElementById('cartCount').textContent = cart.length;
+  }
+
+  function toggleCart() {
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal.style.display === 'block') {
+      cartModal.style.display = 'none';
+    } else {
+      renderCart();
+      cartModal.style.display = 'block';
+    }
+  }
+
+  function renderCart() {
+    const cartItems = document.getElementById('cartItems');
+    cartItems.innerHTML = '';
+    if (cart.length === 0) {
+      cartItems.innerHTML = '<li>Your cart is empty.</li>';
+      return;
+    }
+    cart.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        ${item.name} - <strong>${item.price}</strong> 
+        <button class="remove-btn" onclick="removeFromCart(${index})">x</button>
+        <button class="buy-now-cart" onclick="showProductModalByItem(${index})">Buy Now</button>
+      `;
+      cartItems.appendChild(li);
+    });
+  }
+
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartCount();
+    renderCart();
+  }
+
+  function clearCart() {
+    if(confirm("Are you sure you want to clear the cart?")) {
+      cart = [];
+      updateCartCount();
+      renderCart();
+    }
+  }
+
+  function showProductModal(index) {
+    const product = filteredProducts[index];
+    showModal(product);
+  }
+  
+  function showProductModalByItem(index) {
+    const product = cart[index];
+    showModal(product);
+  }
+
+  function showModal(product) {
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    content.innerHTML = `
+      <h3>Buy Now: ${product.name}</h3>
+      <p>Price: <strong>${product.price}</strong></p>
+      <p>Category: ${product.category} / ${product.subcategory}</p>
+      <button onclick="confirmPurchase('${product.name}')">Confirm Purchase</button>
+      <button onclick="closeProductModal()">Cancel</button>
+    `;
+    modal.style.display = 'flex';
+  }
+
+  function closeProductModal() {
+    document.getElementById('productModal').style.display = 'none';
+  }
+
+  function confirmPurchase(productName) {
+    alert(`Thank you for purchasing ${productName}!`);
+    closeProductModal();
+  }
+
+  // Close modal on clicking outside content
+  document.getElementById('productModal').addEventListener('click', (e) => {
+    if(e.target.id === 'productModal') {
+      closeProductModal();
+    }
+  });
+
+  // Initial display
+  displayProducts();
+  updateCartCount();
+</script>
+
+</body>
+</html>
